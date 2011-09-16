@@ -1,0 +1,9 @@
+import sconsproject as project
+
+project.config.select(
+    packages.MPI(required=True),
+    packages.HDF5(required=True),
+    packages.PTScotch(required=True),
+)
+
+project.build()
