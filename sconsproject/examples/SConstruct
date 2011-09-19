@@ -1,6 +1,7 @@
 import sconsproject as project
+from project import config
 
-project.config.select(
+config.select(
     packages.MPI(required=True),
     packages.HDF5(required=True),
     packages.PTScotch(required=True),

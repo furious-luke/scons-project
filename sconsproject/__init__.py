@@ -1,10 +1,5 @@
-import os
-import sconsconfig as config
-from sconsconfig import packages, tools
-
-__ALL__ = ['config', 'run']
-
 def create_variables():
+    import sconsconfig as config
     vars = Variables('config.py') # Persistent storage.
     vars.AddVariables(
         ('CC', 'Set C compiler.'),
@@ -29,6 +24,7 @@ def create_variables():
     return vars
 
 def create_environment(vars):
+    import os
     tools = ['default', 'cxxtest']
     env = Environment(tools=tools, toolpath=['sconsconfig/tools'], variables=vars, ENV=os.environ, CXXTEST='cxxtest/scripts/cxxtestgen.py')
 

@@ -1,6 +1,6 @@
 #!/bin/env python
 
-import sys, os
+import sys, os, shutil
 
 SConstruct = '''import sconsproject as project
 
@@ -113,6 +113,10 @@ libs = env.get('LIBS', []) + ['discrete', 'parallel', 'containers', 'debug']
 # env.Program(dst_dir + 'app_name', 'source.cc', LIBS=libs)
 '''
 
+def get_prefix():
+    import sconsproject as proj
+    return os.path.dirname(proj.__file__)
+
 def mkdir(dir):
     path = os.path.join(*dir)
     if not os.path.exists(path):
@@ -135,6 +139,8 @@ def write(content, dst):
 
 def write_proj_content(base, name):
     write(SConstruct, (base, name, 'SConstruct'))
+    shutil.copytree(os.path.join(get_prefix(), 'cxxtest'), os.path.join(base, name, 'cxxtest'))
+    shutil.copytree(os.path.join(get_prefix(), 'site_scons'), os.path.join(base, name, 'site_scons'))
 
 def write_sub_content(base, name):
     write(proj_SConscript%name, (base, name, 'SConscript'))
