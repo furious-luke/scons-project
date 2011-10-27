@@ -1,5 +1,6 @@
 def create_variables():
     import sconsconfig as config
+    from SCons.Script import Variables, EnumVariable, BoolVariable, PathVariable
     vars = Variables('config.py') # Persistent storage.
     vars.AddVariables(
         ('CC', 'Set C compiler.'),
@@ -25,6 +26,7 @@ def create_variables():
 
 def create_environment(vars):
     import os
+    from SCons.Script import Environment, Help
     tools = ['default', 'cxxtest']
     env = Environment(tools=tools, toolpath=['sconsconfig/tools'], variables=vars, ENV=os.environ, CXXTEST='cxxtest/scripts/cxxtestgen.py')
 
@@ -49,7 +51,7 @@ def configure_environment(env, vars):
         if env['BUILD'] == 'debug':
             env.MergeFlags('-g -O0')
         elif env['BUILD'] == 'optimised':
-            env.MergeFlags('-DNDEBUG -O3')
+            env.MergeFlags('-DNDEBUG -O2')
 
         if env['BITS'] == '64':
             env.MergeFlags('-m64')
@@ -85,11 +87,11 @@ def configure_environment(env, vars):
         env['BUILD'] = 'build-' + env['BUILD']
         env.PrependUnique(CPPPATH=[
             '#' + env['BUILD'] + '/include',
-            '#' + env['BUILD'] + '/include/' + proj_name,
         ])
         env.PrependUnique(LIBPATH=['#' + env['BUILD'] + '/lib'])
 
-def build(subdirs):
+def build(subdirs, proj_name=''):
+    from SCons.Script import GetOption
     vars = create_variables()
     env = create_environment(vars)
 
@@ -97,10 +99,14 @@ def build(subdirs):
     if not GetOption('help'):
         configure_environment(env, vars)
 
+        # Add the specific project name to the CPPPATH.
+        if proj_name:
+            env.PrependUnique(CPPPATH=['#' + env['BUILD'] + '/include/' + proj_name])
+
         # Call sub scripts.
-        Export('env')
+        env.Export('env')
         for sd in subdirs:
-            SConscript(sd + '/SConscript', variant_dir=env['BUILD'] + '/' + sd, duplicate=0)
+            env.SConscript(sd + '/SConscript', variant_dir=env['BUILD'] + '/' + sd, duplicate=0)
 
         # Alias any special targets.
         env.Alias('install', env['PREFIX'])

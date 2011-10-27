@@ -51,7 +51,19 @@ if env['BUILD_DOC']:
 '''
 
 src_SConscript = '''import os
-Import('env')
+Import('*')
+Export('env')
+
+# Either create or update the current subdirectory.
+if 'cur_sub_dir' not in locals():
+    cur_sub_dir = ''
+
+# Declare sub-directories.
+sub_dirs = []
+
+# Pick out the files we will be building.
+hdrs = env.Glob('*.hh')
+srcs = env.Glob('*.cc')
 
 # Try and use latest collections module, or use the OrderedDict in
 # scons-config.
@@ -60,22 +72,29 @@ try:
 except:
     from sconsconfig.utils.OrderedDict import OrderedDict
 
-# Pick out the files we will be building.
-hdrs = env.Glob('*.hh')
-srcs = env.Glob('*.cc')
-
 # Initialise an object map. This will map from the source file name to the objects they
 # produce.
 obj_map = OrderedDict()
 
+# Descend to sub-directories first.
+for sd in sub_dirs:
+    bak = cur_sub_dir
+    cur_sub_dir += sd
+    obj_map.update(SConscript(sd + '/SConscript', duplicate=0, exports='cur_sub_dir'))
+    cur_sub_dir = bak
+
 # Install headers.
-env.Install('#' + env['BUILD']  + '/include/' + env['PROJ'], hdrs)
+if cur_sub_dir:
+   cur_sub_dir = '/' + cur_sub_dir
+env.Install('#' + env['BUILD']  + '/include/' + env['PROJ'] + cur_sub_dir, hdrs)
 if env['PREFIX']:
-    env.Install(env['PREFIX'] + '/include/' + env['PROJ'], hdrs)
+    env.Install(env['PREFIX'] + '/include/' + env['PROJ'] + cur_sub_dir, hdrs)
 
 # Build source files.
+if cur_sub_dir:
+   cur_sub_dir = cur_sub_dir[1:] + '/'
 for src in srcs:
-    obj_map[os.path.basename(src.path)] = env.SharedObject(src)
+    obj_map[cur_sub_dir + os.path.basename(src.path)] = env.SharedObject(src)
 
 Return('obj_map')
 '''
@@ -113,6 +132,15 @@ libs = env.get('LIBS', []) + ['discrete', 'parallel', 'containers', 'debug']
 # env.Program(dst_dir + 'app_name', 'source.cc', LIBS=libs)
 '''
 
+scripts_SConscript = '''Import('env')
+
+scripts = []
+
+env.Install('#' + env['BUILD']  + '/bin/', scripts)
+if env['PREFIX']:
+    env.Install(env['PREFIX'] + '/bin/', scripts)
+'''
+
 def get_prefix():
     import sconsproject as proj
     return os.path.dirname(proj.__file__)
@@ -126,7 +154,7 @@ def make_proj_tree(base, name):
     mkdir((base, name))
 
 def make_sub_tree(base, name):
-    sub_branches = ['src', 'tests', 'apps', 'exs', 'docs']
+    sub_branches = ['src', 'tests', 'apps', 'exs', 'docs', 'scripts']
     branches = [(base, name, s) for s in sub_branches]
     for branch in branches:
         mkdir(branch)
@@ -148,6 +176,7 @@ def write_sub_content(base, name):
     write(tests_SConscript, (base, name, 'tests', 'SConscript'))
     write(exs_SConscript, (base, name, 'exs', 'SConscript'))
     write(apps_SConscript, (base, name, 'apps', 'SConscript'))
+    write(scripts_SConscript, (base, name, 'scripts', 'SConscript'))
 
 if __name__ == '__main__':
     try:
