@@ -6,7 +6,7 @@ def create_variables():
         ('CC', 'Set C compiler.'),
         ('CXX', 'Set CXX compiler.'),
         EnumVariable('BUILD', 'Set the build type.', 'debug', allowed_values=('debug', 'optimised')),
-        EnumVariable('BITS', 'Set number of bits.', '32', allowed_values=('32', '64')),
+        EnumVariable('BITS', 'Set number of bits.', 'default', allowed_values=('32', '64', 'default')),
         BoolVariable('PROF', 'Enable profiling.', False),
         BoolVariable('WITH_TAU', 'Enable tau profiling.', False),
         BoolVariable('WITH_GCOV', 'Enable coverage testing with gcov.', False),
@@ -56,7 +56,7 @@ def configure_environment(env, vars):
         if env['BITS'] == '64':
             env.MergeFlags('-m64')
             env.AppendUnique(LINKFLAGS=['-m64'])
-        else:
+        elif env['BITS'] == '32':
             env.MergeFlags('-m32')
             env.AppendUnique(LINKFLAGS=['-m32'])
 
