@@ -36,9 +36,6 @@ def create_environment(vars):
         print 'Unknown variables:', unknown.keys()
         env.Exit(1)
 
-    # Take a snapshot of provided options before we continue.
-    vars.Save('config.py', env)
-
     # Generate a help line later use.
     Help(vars.GenerateHelpText(env))
 
@@ -76,8 +73,7 @@ def configure_environment(env, vars):
             env.AppendUnique(CPPDEFINES=['NDEBUG'])
 
         # Run the configuration and save it to file.
-        config.configure(env)
-        vars.Save('config.py', env)
+        config.configure(env, vars)
 
         # Make sure we can find CxxTest.
         env.PrependUnique(CPPPATH=['#cxxtest/include'])
