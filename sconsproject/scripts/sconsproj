@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 import sys, os, shutil
 
@@ -62,7 +62,7 @@ if 'cur_sub_dir' not in locals():
 sub_dirs = []
 
 # Pick out the files we will be building.
-hdrs = env.Glob('*.hh')
+hdrs = env.Glob('*.hh') + env.Glob('*.tcc')
 srcs = env.Glob('*.cc')
 
 # Try and use latest collections module, or use the OrderedDict in
@@ -106,14 +106,21 @@ srcs = (
 #     ('source.cc', 'dep1.cc', 'dep2.cc', (range(num_ranks)),),
 )
 
+libs = [] + env.get('LIBS', [])
+
 for src in srcs:
     if isinstance(src, str):
         objs = []
     else:
+        if len(src) and isinstance(src[-1], (list, tuple)):
+            ranks = src[-1]
+            src = src[:-1]
+        else:
+            ranks = []
         objs = src[1:] if (len(src) > 1) else []
         objs = [obj_map[o] for o in objs]
         src = src[0]
-    env.CxxTest([src] + objs)
+    env.CxxTest([src] + objs, ranks=ranks, LIBS=libs)
 '''
 
 exs_SConscript = '''Import('env')

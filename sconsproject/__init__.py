@@ -24,7 +24,10 @@ def create_variables():
 
     return vars
 
-def create_environment(vars):
+def create_environment(vars=None):
+    if vars is None:
+        vars = create_variables()
+
     import os
     from SCons.Script import Environment, Help
     tools = ['default', 'cxxtest']
@@ -41,57 +44,61 @@ def create_environment(vars):
 
     return env
 
-def configure_environment(env, vars):
-        # Modify the environment based on any of our variables. Be sure
-        # to do this before configuring packages, as we want project flags
-        # to influence how packages are checked.
-        if env['BUILD'] == 'debug':
-            env.MergeFlags('-g -O0')
-        elif env['BUILD'] == 'optimised':
-            env.MergeFlags('-DNDEBUG -O2')
+def configure_environment(env, vars=None):
+    if vars is None:
+        vars = create_variables()
 
-        if env['BITS'] == '64':
-            env.MergeFlags('-m64')
-            env.AppendUnique(LINKFLAGS=['-m64'])
-        elif env['BITS'] == '32':
-            env.MergeFlags('-m32')
-            env.AppendUnique(LINKFLAGS=['-m32'])
+    # Modify the environment based on any of our variables. Be sure
+    # to do this before configuring packages, as we want project flags
+    # to influence how packages are checked.
+    if env['BUILD'] == 'debug':
+        env.MergeFlags('-g -O0')
+    elif env['BUILD'] == 'optimised':
+        env.MergeFlags('-DNDEBUG -O2')
 
-        if env['PROF']:
-            env.MergeFlags('-g -pg')
-            env.AppendUnique(LINKFLAGS=['-pg'])
+    if env['BITS'] == '64':
+        env.MergeFlags('-m64')
+        env.AppendUnique(LINKFLAGS=['-m64'])
+    elif env['BITS'] == '32':
+        env.MergeFlags('-m32')
+        env.AppendUnique(LINKFLAGS=['-m32'])
 
-        if env['WITH_GCOV']:
-            env.AppendUnique(CFLAGS=['-fprofile-arcs', '-ftest-coverage'])
-            env.AppendUnique(CCFLAGS=['-fprofile-arcs', '-ftest-coverage'])
-            env.AppendUnique(LINKFLAGS=['-fprofile-arcs', '-ftest-coverage'])
+    if env['PROF']:
+        env.MergeFlags('-g -pg')
+        env.AppendUnique(LINKFLAGS=['-pg'])
 
-        if env['WITH_TAU']:
-            env['CC'] = 'tau_cc.sh'
-            env['CXX'] = 'tau_cxx.sh'
-            env.AppendUnique(CPPDEFINES=['WITH_TAU'])
-            env.AppendUnique(CPPDEFINES=['NDEBUG'])
+    if env['WITH_GCOV']:
+        env.AppendUnique(CFLAGS=['-fprofile-arcs', '-ftest-coverage'])
+        env.AppendUnique(CCFLAGS=['-fprofile-arcs', '-ftest-coverage'])
+        env.AppendUnique(LINKFLAGS=['-fprofile-arcs', '-ftest-coverage'])
 
-        # Run the configuration and save it to file.
-        config.configure(env, vars)
+    if env['WITH_TAU']:
+        env['CC'] = 'tau_cc.sh'
+        env['CXX'] = 'tau_cxx.sh'
+        env.AppendUnique(CPPDEFINES=['WITH_TAU'])
+        env.AppendUnique(CPPDEFINES=['NDEBUG'])
 
-        # Make sure we can find CxxTest.
-        env.PrependUnique(CPPPATH=['#cxxtest/include'])
+    # Run the configuration and save it to file.
+    config.configure(env, vars)
 
-        # Make sure our source code can locate installed headers and
-        # libraries.
-        env['BUILD'] = 'build-' + env['BUILD']
-        env.PrependUnique(CPPPATH=[
-            '#' + env['BUILD'] + '/include',
-        ])
-        env.PrependUnique(LIBPATH=['#' + env['BUILD'] + '/lib'])
+    # Make sure we can find CxxTest.
+    env.PrependUnique(CPPPATH=['#cxxtest/include'])
 
-def build(subdirs, proj_name=''):
-    from SCons.Script import GetOption
+    # Make sure our source code can locate installed headers and
+    # libraries.
+    env['BUILD'] = 'build-' + env['BUILD']
+    env.PrependUnique(CPPPATH=[
+        '#' + env['BUILD'] + '/include',
+    ])
+    env.PrependUnique(LIBPATH=['#' + env['BUILD'] + '/lib'])
+
+def build(subdirs, proj_name='', env=None):
     vars = create_variables()
-    env = create_environment(vars)
+    if env is None:
+        env = create_environment(vars)
 
     # If the user requested help don't bother continuing with the build.
+    from SCons.Script import GetOption
     if not GetOption('help'):
         configure_environment(env, vars)
 
