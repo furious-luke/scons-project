@@ -92,8 +92,9 @@ def configure_environment(env, vars=None):
     ])
     env.PrependUnique(LIBPATH=['#' + env['BUILD'] + '/lib'])
 
-def build(subdirs, proj_name='', env=None):
-    vars = create_variables()
+def build(subdirs, proj_name='', env=None, vars=None):
+    if vars is None:
+        vars = create_variables()
     if env is None:
         env = create_environment(vars)
 
