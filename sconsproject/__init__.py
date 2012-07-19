@@ -1,3 +1,13 @@
+import subprocess, os
+
+
+def source_environment(filename):
+    stdout = subprocess.check_output(['bash', '-c', 'source ' + filename + ' && env'])
+    for line in stdout.splitlines():
+        key, _, value = line.partition('=')
+        os.environ[key] = value
+
+
 def create_variables():
     import sconsconfig as config
     from SCons.Script import Variables, EnumVariable, BoolVariable, PathVariable
