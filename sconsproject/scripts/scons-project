@@ -16,7 +16,7 @@ proj_SConscript = '''Import('env')
 Export('env')
 
 # Set the project name. This is passed on to sub-scripts.
-env['PROJ'] = '%s'
+env['SUBPROJ'] = '%s'
 
 # Call the 'src' SConscript. It will return a dictionary containing
 # a mapping from the object path basename to the object.
@@ -24,13 +24,13 @@ obj_map = SConscript('src/SConscript', duplicate=0)
 
 # Build static libraries and install them, if required.
 if env['BUILD_STATIC_LIBS']:
-    lib = env.Library('#' + env['BUILD'] + '/lib/' + env['PROJ'], obj_map.values())
+    lib = env.Library('#' + env['BUILD'] + '/lib/' + env['SUBPROJ'], obj_map.values())
     if env['PREFIX']:
         env.Install(env['PREFIX'] + '/lib', lib)
 
 # Build shared libraries and install them, if required.
 if env['BUILD_SHARED_LIBS'] and env['PREFIX']:
-    env.SharedLibrary(env['PREFIX'] + '/lib/' + env['PROJ'], obj_map.values())
+    env.SharedLibrary(env['PREFIX'] + '/lib/' + env['SUBPROJ'], obj_map.values())
 
 # Call the 'tests' SConscript, if required.
 if env['BUILD_TESTS']:
@@ -86,9 +86,13 @@ for sd in sub_dirs:
 # Install headers.
 if cur_sub_dir:
    cur_sub_dir = '/' + cur_sub_dir
-env.Install('#' + env['BUILD']  + '/include/' + env['PROJ'] + cur_sub_dir, hdrs)
+if env.get('PROJECT_NAME'):
+   proj_dir = env['PROJECT_NAME'] + '/'
+else:
+   proj_dir = ''
+env.Install('#' + env['BUILD']  + '/include/' + proj_dir + env['SUBPROJ'] + cur_sub_dir, hdrs)
 if env['PREFIX']:
-    env.Install(env['PREFIX'] + '/include/' + env['PROJ'] + cur_sub_dir, hdrs)
+    env.Install(env['PREFIX'] + '/include/' + proj_dir + env['SUBPROJ'] + cur_sub_dir, hdrs)
 
 # Build source files.
 if cur_sub_dir:
@@ -177,7 +181,7 @@ def write_proj_content(base, name):
     shutil.copytree(os.path.join(get_prefix(), 'cxxtest'), os.path.join(base, name, 'cxxtest'))
     shutil.copytree(os.path.join(get_prefix(), 'site_scons'), os.path.join(base, name, 'site_scons'))
 
-def write_sub_content(base, name):
+def write_sub_content(base, name, project_name=''):
     write(proj_SConscript%name, (base, name, 'SConscript'))
     write(src_SConscript, (base, name, 'src', 'SConscript'))
     write(tests_SConscript, (base, name, 'tests', 'SConscript'))

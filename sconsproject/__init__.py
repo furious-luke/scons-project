@@ -1,4 +1,5 @@
 import subprocess, os
+import config
 
 
 def source_environment(filename):
@@ -115,12 +116,18 @@ def build(subdirs, proj_name='', env=None, vars=None):
 
         # Add the specific project name to the CPPPATH.
         if proj_name:
+            env['PROJECT_NAME'] = proj_name
             env.PrependUnique(CPPPATH=['#' + env['BUILD'] + '/include/' + proj_name])
 
         # Call sub scripts.
         env.Export('env')
         for sd in subdirs:
             env.SConscript(sd + '/SConscript', variant_dir=env['BUILD'] + '/' + sd, duplicate=0)
+
+        # Process the project level directory.
+        # TODO: This needs to be looked at, generally.
+        if os.path.exists('project'):
+            env.SConscript('project/SConscript', variant_dir=env['BUILD'] + '/', duplicate=0)
 
         # Alias any special targets.
         env.Alias('install', env['PREFIX'])
