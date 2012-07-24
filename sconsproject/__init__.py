@@ -1,5 +1,6 @@
 import subprocess, os
 import config
+import helpers
 
 
 def source_environment(filename):
@@ -28,6 +29,7 @@ def create_variables():
         BoolVariable('BUILD_EXS', 'Build unit tests.', True),
         BoolVariable('BUILD_APPS', 'Build applications.', True),
         BoolVariable('BUILD_DOC', 'Build documentation.', False),
+        BoolVariable('INSTALL_SUB', 'Install subproject libraries.', False),
     )
 
     # Add options from any packages we want to use.
@@ -119,15 +121,36 @@ def build(subdirs, proj_name='', env=None, vars=None):
             env['PROJECT_NAME'] = proj_name
             env.PrependUnique(CPPPATH=['#' + env['BUILD'] + '/include/' + proj_name])
 
+        # These will be returned from subscripts.
+        sources = []
+        static_libs = []
+        shared_libs = []
+
         # Call sub scripts.
         env.Export('env')
         for sd in subdirs:
-            env.SConscript(sd + '/SConscript', variant_dir=env['BUILD'] + '/' + sd, duplicate=0)
+            objs = env.SConscript(sd + '/SConscript', variant_dir=env['BUILD'] + '/' + sd, duplicate=0)
+            sources.extend(objs[0])
+            static_libs.extend(objs[1])
+            shared_libs.extend(objs[2])
 
         # Process the project level directory.
-        # TODO: This needs to be looked at, generally.
-        if os.path.exists('project'):
-            env.SConscript('project/SConscript', variant_dir=env['BUILD'] + '/', duplicate=0)
+        env['SUBPROJ'] = ''
+        obj_map = env.SConscript('src/SConscript', duplicate=0)
+        if env['BUILD_STATIC_LIBS']:
+            lib = env.Library('#' + env['BUILD'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
+            if env['PREFIX']:
+                env.Install(env['PREFIX'] + '/lib', lib)
+        if env['BUILD_SHARED_LIBS'] and env['PREFIX']:
+            env.SharedLibrary(env['PREFIX'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
+        if env['BUILD_TESTS']:
+            env.SConscript('tests/SConscript', duplicate=0, exports=['obj_map'])
+        if env['BUILD_APPS']:
+            env.SConscript('apps/SConscript', duplicate=0, exports=['obj_map'])
+        if env['BUILD_EXS']:
+            env.SConscript('exs/SConscript', duplicate=0, exports=['obj_map'])
+        if env['BUILD_DOC']:
+            env.SConscript('doc/SConscript', duplicate=0)
 
         # Alias any special targets.
         env.Alias('install', env['PREFIX'])

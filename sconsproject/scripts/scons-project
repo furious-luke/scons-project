@@ -1,207 +1,29 @@
 #!/usr/bin/env python
 
-import argparse, sys, os, shutil
+import argparse, sys, os
+import sconsproject.utils as utils
 
-SConstruct = '''import sconsproject as project
-
-# project.config.select(
-#     packages.MPI(required=True),
-#     packages.HDF5(required=True),
-# )
-
-# project.build([<sub_directories>])
-'''
-
-proj_SConscript = '''Import('env')
-Export('env')
-
-# Set the project name. This is passed on to sub-scripts.
-env['SUBPROJ'] = '%s'
-
-# Call the 'src' SConscript. It will return a dictionary containing
-# a mapping from the object path basename to the object.
-obj_map = SConscript('src/SConscript', duplicate=0)
-
-# Build static libraries and install them, if required.
-if env['BUILD_STATIC_LIBS']:
-    lib = env.Library('#' + env['BUILD'] + '/lib/' + env['SUBPROJ'], obj_map.values())
-    if env['PREFIX']:
-        env.Install(env['PREFIX'] + '/lib', lib)
-
-# Build shared libraries and install them, if required.
-if env['BUILD_SHARED_LIBS'] and env['PREFIX']:
-    env.SharedLibrary(env['PREFIX'] + '/lib/' + env['SUBPROJ'], obj_map.values())
-
-# Call the 'tests' SConscript, if required.
-if env['BUILD_TESTS']:
-    SConscript('tests/SConscript', duplicate=0, exports=['obj_map'])
-
-# Build any applications.
-if env['BUILD_APPS']:
-    SConscript('apps/SConscript', duplicate=0, exports=['obj_map'])
-
-# Call the 'exs' SConscript, if required. Examples will typically
-# be untested demonstrations of code usage.
-if env['BUILD_EXS']:
-    SConscript('exs/SConscript', duplicate=0, exports=['obj_map'])
-
-# Build documentation.
-if env['BUILD_DOC']:
-    SConscript('doc/SConscript', duplicate=0)
-'''
-
-src_SConscript = '''import os
-Import('*')
-Export('env')
-
-# Either create or update the current subdirectory.
-if 'cur_sub_dir' not in locals():
-    cur_sub_dir = ''
-
-# Declare sub-directories.
-sub_dirs = []
-
-# Pick out the files we will be building.
-hdrs = env.Glob('*.hh') + env.Glob('*.tcc')
-srcs = env.Glob('*.cc')
-
-# Try and use latest collections module, or use the OrderedDict in
-# scons-config.
-try:
-    from collections import OrderedDict
-except:
-    from sconsconfig.utils.OrderedDict import OrderedDict
-
-# Initialise an object map. This will map from the source file name to the objects they
-# produce.
-obj_map = OrderedDict()
-
-# Descend to sub-directories first.
-for sd in sub_dirs:
-    bak = cur_sub_dir
-    cur_sub_dir += sd
-    obj_map.update(SConscript(sd + '/SConscript', duplicate=0, exports='cur_sub_dir'))
-    cur_sub_dir = bak
-
-# Install headers.
-if cur_sub_dir:
-   cur_sub_dir = '/' + cur_sub_dir
-if env.get('PROJECT_NAME'):
-   proj_dir = env['PROJECT_NAME'] + '/'
-else:
-   proj_dir = ''
-env.Install('#' + env['BUILD']  + '/include/' + proj_dir + env['SUBPROJ'] + cur_sub_dir, hdrs)
-if env['PREFIX']:
-    env.Install(env['PREFIX'] + '/include/' + proj_dir + env['SUBPROJ'] + cur_sub_dir, hdrs)
-
-# Build source files.
-if cur_sub_dir:
-   cur_sub_dir = cur_sub_dir[1:] + '/'
-for src in srcs:
-    obj_map[cur_sub_dir + os.path.basename(src.path)] = env.SharedObject(src)
-
-Return('obj_map')
-'''
-
-tests_SConscript = '''Import('env', 'obj_map')
-Export('env', 'obj_map')
-
-srcs = (
-#     ('source.cc', 'dep1.cc', 'dep2.cc', (range(num_ranks)),),
-)
-
-libs = [] + env.get('LIBS', [])
-
-for src in srcs:
-    if isinstance(src, str):
-        objs = []
-    else:
-        if len(src) and isinstance(src[-1], (list, tuple)):
-            ranks = src[-1]
-            src = src[:-1]
-        else:
-            ranks = []
-        objs = src[1:] if (len(src) > 1) else []
-        objs = [obj_map[o] for o in objs]
-        src = src[0]
-    env.CxxTest([src] + objs, ranks=ranks, LIBS=libs)
-'''
-
-exs_SConscript = '''Import('env')
-
-dst_dir = '#' + env['BUILD'] + '/exs/'
-libs = env.get('LIBS', []) + ['discrete', 'parallel', 'containers', 'debug']
-
-# env.Program(dst_dir + 'ex_name', 'source.cc', LIBS=libs)
-'''
-
-apps_SConscript = '''Import('env')
-
-dst_dir = '#' + env['BUILD'] + '/bin/'
-libs = env.get('LIBS', []) + ['discrete', 'parallel', 'containers', 'debug']
-
-# env.Program(dst_dir + 'app_name', 'source.cc', LIBS=libs)
-'''
-
-scripts_SConscript = '''Import('env')
-
-scripts = []
-
-env.Install('#' + env['BUILD']  + '/bin/', scripts)
-if env['PREFIX']:
-    env.Install(env['PREFIX'] + '/bin/', scripts)
-'''
-
-def get_prefix():
-    import sconsproject as proj
-    return os.path.dirname(proj.__file__)
-
-def mkdir(dir):
-    path = os.path.join(*dir)
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-def make_proj_tree(base, name):
-    mkdir((base, name))
-
-def make_sub_tree(base, name):
-    sub_branches = ['src', 'tests', 'apps', 'exs', 'docs', 'scripts']
-    branches = [(base, name, s) for s in sub_branches]
-    for branch in branches:
-        mkdir(branch)
-
-def write(content, dst):
-    path = os.path.join(*dst)
-    if not os.path.exists(path):
-        with open(path, 'w') as dst_file:
-            dst_file.write(content)
-
-def write_proj_content(base, name):
-    write(SConstruct, (base, name, 'SConstruct'))
-    shutil.copytree(os.path.join(get_prefix(), 'cxxtest'), os.path.join(base, name, 'cxxtest'))
-    shutil.copytree(os.path.join(get_prefix(), 'site_scons'), os.path.join(base, name, 'site_scons'))
-
-def write_sub_content(base, name, project_name=''):
-    write(proj_SConscript%name, (base, name, 'SConscript'))
-    write(src_SConscript, (base, name, 'src', 'SConscript'))
-    write(tests_SConscript, (base, name, 'tests', 'SConscript'))
-    write(exs_SConscript, (base, name, 'exs', 'SConscript'))
-    write(apps_SConscript, (base, name, 'apps', 'SConscript'))
-    write(scripts_SConscript, (base, name, 'scripts', 'SConscript'))
-
+##
+##
+##
 def start_project(args):
     base = os.getcwd()
-    make_proj_tree(base, args.name)
-    write_proj_content(base, args.name)
+    utils.copy_data('base', os.path.join(base, args.name))
 
+##
+##
+##
 def start_sub(args):
     base = os.getcwd()
     if not os.path.exists(os.path.join(base, 'SConstruct')):
-        print 'Not in a project directory'
+        print 'Not in a project root directory'
         sys.exit()
-    make_sub_tree(base, args.name)
-    write_sub_content(base, args.name)
+    utils.copy_data('sub', os.path.join(base, args.name))
+    utils.subs(os.path.join(base, args.name, 'SConscript'), {'sub_name': args.name})
 
+##
+##
+##
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Manage SCons projects.')

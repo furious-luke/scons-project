@@ -1,2 +1,1 @@
-recursive-include sconsproject/cxxtest *
-recursive-include sconsproject/site_scons *
+recursive-include sconsproject/data *
