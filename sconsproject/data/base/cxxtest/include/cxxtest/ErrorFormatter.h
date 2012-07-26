@@ -9,9 +9,9 @@
 // analogout to std::ostream.
 //
 
-#ifndef MPICH_SKIP_MPICXX
-#define MPICH_SKIP_MPICXX
-#endif
+// #ifndef MPICH_SKIP_MPICXX
+// #define MPICH_SKIP_MPICXX
+// #endif
 #include <mpi.h>
 
 #include <cxxtest/TestRunner.h>
