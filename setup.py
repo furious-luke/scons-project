@@ -24,7 +24,7 @@ setup(
     license='BSD',
 
     packages=find_packages(),
-    scripts=['sconsproject/scripts/sconsproj'],
+    scripts=['sconsproject/scripts/scons-project'],
     include_package_data=True,
     install_requires=['setuptools'],
     zip_safe=False,

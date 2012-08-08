@@ -30,6 +30,7 @@ def create_variables():
         BoolVariable('BUILD_APPS', 'Build applications.', True),
         BoolVariable('BUILD_DOC', 'Build documentation.', False),
         BoolVariable('INSTALL_SUB', 'Install subproject libraries.', False),
+        BoolVariable('DOWNLOAD_ALL', 'Download and install dependencies automatically.', False),
     )
 
     # Add options from any packages we want to use.
