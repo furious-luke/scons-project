@@ -138,11 +138,11 @@ def build(subdirs, proj_name='', env=None, vars=None):
         # Process the project level directory.
         env['SUBPROJ'] = ''
         obj_map = env.SConscript('src/SConscript', duplicate=0)
-        if env['BUILD_STATIC_LIBS']:
+        if env['BUILD_STATIC_LIBS'] and proj_name:
             lib = env.Library('#' + env['BUILD'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
             if env['PREFIX']:
                 env.Install(env['PREFIX'] + '/lib', lib)
-        if env['BUILD_SHARED_LIBS'] and env['PREFIX']:
+        if env['BUILD_SHARED_LIBS'] and env['PREFIX'] and proj_name:
             env.SharedLibrary(env['PREFIX'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
         if env['BUILD_TESTS']:
             env.SConscript('tests/SConscript', duplicate=0, exports=['obj_map'])
