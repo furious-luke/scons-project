@@ -122,7 +122,7 @@ def build(subdirs, proj_name='', env=None, vars=None):
         # Add the specific project name to the CPPPATH.
         if proj_name:
             env['PROJECT_NAME'] = proj_name
-        #     env.PrependUnique(CPPPATH=['#' + env['BUILD'] + '/include/' + proj_name])
+            env.PrependUnique(CPPPATH=['#' + env['BUILD'] + '/include/' + proj_name])
 
         # These will be returned from subscripts.
         sources = []
