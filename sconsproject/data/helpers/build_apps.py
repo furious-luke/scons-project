@@ -18,4 +18,6 @@ for srcs in sources:
         app_srcs = srcs[1:]
     else:
         app_srcs = []
-    env.Program(dst_dir + app_name, app_srcs, LIBS=libs)
+    app = env.Program(dst_dir + app_name, app_srcs, LIBS=libs)
+    if env['PREFIX']:
+        env.Install(env['PREFIX'] + '/bin', app)
