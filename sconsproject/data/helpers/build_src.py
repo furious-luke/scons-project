@@ -11,8 +11,9 @@ Export('env')
 if 'cur_sub_dir' not in locals():
     cur_sub_dir = ''
 
-# Declare sub-directories.
-sub_dirs = []
+# If sub_dirs isn't defined, create it.
+if 'sub_dirs' not in locals():
+    sub_dirs = []
 
 # Try and use latest collections module, or use the OrderedDict in
 # scons-config.
