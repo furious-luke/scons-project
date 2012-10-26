@@ -20,6 +20,7 @@ def create_variables():
         EnumVariable('BUILD', 'Set the build type.', 'debug', allowed_values=('debug', 'optimised', 'testopt')),
         EnumVariable('BITS', 'Set number of bits.', 'default', allowed_values=('32', '64', 'default')),
         BoolVariable('PROF', 'Enable profiling.', False),
+        BoolVariable('WITH_OPENMP', 'Enable threading with OpenMP.', False),
         BoolVariable('WITH_TAU', 'Enable tau profiling.', False),
         BoolVariable('WITH_GCOV', 'Enable coverage testing with gcov.', False),
         PathVariable('PREFIX', 'Set install location.', '/usr/local', PathVariable.PathIsDirCreate),
@@ -93,6 +94,9 @@ def configure_environment(env, vars=None):
         env['CXX'] = 'tau_cxx.sh'
         env.AppendUnique(CPPDEFINES=['WITH_TAU'])
         env.AppendUnique(CPPDEFINES=['NDEBUG'])
+
+    if env['WITH_OPENMP']:
+        env.MergeFlags('-fopenmp')
 
     # Run the configuration and save it to file.
     config.configure(env, vars)
