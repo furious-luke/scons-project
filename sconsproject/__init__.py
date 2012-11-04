@@ -1,4 +1,4 @@
-import subprocess, os
+import subprocess, os, multiprocessing
 import config
 import helpers
 
@@ -63,9 +63,7 @@ def configure_environment(env, vars=None):
     if vars is None:
         vars = create_variables()
 
-    # Modify the environment based on any of our variables. Be sure
-    # to do this before configuring packages, as we want project flags
-    # to influence how packages are checked.
+    # Configure for build type.
     if env['BUILD'] == 'debug':
         env.MergeFlags('-g -O0')
     elif env['BUILD'] == 'optimised':
@@ -73,6 +71,7 @@ def configure_environment(env, vars=None):
     elif env['BUILD'] == 'testopt':
         env.MergeFlags('-g -O2 -DNDEBUG')
 
+    # Configure the bit architecture.
     if env['BITS'] == '64':
         env.MergeFlags('-m64')
         env.AppendUnique(LINKFLAGS=['-m64'])
@@ -95,6 +94,7 @@ def configure_environment(env, vars=None):
         env.AppendUnique(CPPDEFINES=['WITH_TAU'])
         env.AppendUnique(CPPDEFINES=['NDEBUG'])
 
+    # Configure for OpenMP.
     if env['WITH_OPENMP']:
         env.MergeFlags('-fopenmp')
 
