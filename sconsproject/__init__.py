@@ -17,9 +17,12 @@ def create_variables():
     vars.AddVariables(
         ('CC', 'Set C compiler.'),
         ('CXX', 'Set CXX compiler.'),
-        EnumVariable('BUILD', 'Set the build type.', 'debug', allowed_values=('debug', 'optimised', 'testopt')),
+        EnumVariable('BUILD', 'Set the build type.', 'debug', allowed_values=('debug', 'dbgopt', 'optimised', 'testopt')),
         EnumVariable('BITS', 'Set number of bits.', 'default', allowed_values=('32', '64', 'default')),
         BoolVariable('PROF', 'Enable profiling.', False),
+        BoolVariable('LOG', 'Enable logging.', True),
+        BoolVariable('LOG_TRIVIAL', 'Enable trivial logging.', True),
+        BoolVariable('LOG_DEBUG', 'Enable debug logging.', True),
         BoolVariable('WITH_OPENMP', 'Enable threading with OpenMP.', False),
         BoolVariable('WITH_TAU', 'Enable tau profiling.', False),
         BoolVariable('WITH_GCOV', 'Enable coverage testing with gcov.', False),
@@ -66,10 +69,12 @@ def configure_environment(env, vars=None):
     # Configure for build type.
     if env['BUILD'] == 'debug':
         env.MergeFlags('-g -O0')
-    elif env['BUILD'] == 'optimised':
-        env.MergeFlags('-DNDEBUG -O2')
     elif env['BUILD'] == 'testopt':
         env.MergeFlags('-g -O2 -DNDEBUG')
+    elif env['BUILD'] == 'dbgopt':
+        env.MergeFlags('-g -O2')
+    elif env['BUILD'] == 'optimised':
+        env.MergeFlags('-DNDEBUG -O2')
 
     # Configure the bit architecture.
     if env['BITS'] == '64':
@@ -97,6 +102,14 @@ def configure_environment(env, vars=None):
     # Configure for OpenMP.
     if env['WITH_OPENMP']:
         env.MergeFlags('-fopenmp')
+
+    # Configure logging.
+    if not env['LOG']:
+        env.MergeFlags('-DNLOG')
+    if not env['LOG_TRIVIAL']:
+        env.MergeFlags('-DNLOGTRIVIAL')
+    if not env['LOG_DEBUG']:
+        env.MergeFlags('-DNLOGDEBUG')
 
     # Run the configuration and save it to file.
     config.configure(env, vars)
