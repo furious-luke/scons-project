@@ -156,20 +156,23 @@ def build(subdirs, proj_name='', env=None, vars=None):
 
         # Process the project level directory.
         env['SUBPROJ'] = ''
-        obj_map = env.SConscript('src/SConscript', variant_dir=env['BUILD'] + '/src', duplicate=0)
+        if os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'src')):
+            obj_map = env.SConscript('src/SConscript', variant_dir=env['BUILD'] + '/src', duplicate=0)
+        else:
+            obj_map = {}
         if env['BUILD_STATIC_LIBS'] and proj_name:
             lib = env.Library('#' + env['BUILD'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
             if env['PREFIX']:
                 env.Install(env['PREFIX'] + '/lib', lib)
         if env['BUILD_SHARED_LIBS'] and env['PREFIX'] and proj_name:
             env.SharedLibrary(env['PREFIX'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
-        if env['BUILD_TESTS']:
+        if env['BUILD_TESTS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'tests')):
             env.SConscript('tests/SConscript', variant_dir=env['BUILD'] + '/tests', duplicate=0, exports=['obj_map'])
-        if env['BUILD_APPS']:
+        if env['BUILD_APPS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'apps')):
             env.SConscript('apps/SConscript', variant_dir=env['BUILD'] + '/apps', duplicate=0, exports=['obj_map'])
-        if env['BUILD_EXS']:
+        if env['BUILD_EXS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'exs')):
             env.SConscript('exs/SConscript', variant_dir=env['BUILD'] + '/exs', duplicate=0, exports=['obj_map'])
-        if env['BUILD_DOC']:
+        if env['BUILD_DOC'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'doc')):
             env.SConscript('doc/SConscript', variant_dir=env['BUILD'] + '/doc', duplicate=0)
 
         # Alias any special targets.
