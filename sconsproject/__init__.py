@@ -125,11 +125,14 @@ def configure_environment(env, vars=None):
     ])
     env.PrependUnique(LIBPATH=['#' + env['BUILD'] + '/lib'])
 
-def build(subdirs, proj_name='', env=None, vars=None):
+def build(subdirs, proj_name='', env=None, vars=None, **kwargs):
     if vars is None:
         vars = create_variables()
     if env is None:
         env = create_environment(vars)
+
+    # Check for different directories.
+    env['TESTS_DIR'] = kwargs.get('tests_dir', 'tests')
 
     # If the user requested help don't bother continuing with the build.
     from SCons.Script import GetOption
@@ -166,8 +169,8 @@ def build(subdirs, proj_name='', env=None, vars=None):
                 env.Install(env['PREFIX'] + '/lib', lib)
         if env['BUILD_SHARED_LIBS'] and env['PREFIX'] and proj_name:
             env.SharedLibrary(env['PREFIX'] + '/lib/' + env['PROJECT_NAME'], obj_map.values() + sources)
-        if env['BUILD_TESTS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'tests')):
-            env.SConscript('tests/SConscript', variant_dir=env['BUILD'] + '/tests', duplicate=0, exports=['obj_map'])
+        if env['BUILD_TESTS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, env['TESTS_DIR'])):
+            env.SConscript('tests/SConscript', variant_dir=env['BUILD'] + '/' + env['TESTS_DIR'], duplicate=0, exports=['obj_map'])
         if env['BUILD_APPS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'apps')):
             env.SConscript('apps/SConscript', variant_dir=env['BUILD'] + '/apps', duplicate=0, exports=['obj_map'])
         if env['BUILD_EXS'] and os.path.exists(os.path.join(env.Dir('.').srcnode().abspath, 'exs')):

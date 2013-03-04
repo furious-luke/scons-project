@@ -28,8 +28,8 @@ if env['BUILD_SHARED_LIBS'] and env['PREFIX'] and env.get('INSTALL_SUB'):
     shared_libs += lib
 
 # Call the 'tests' SConscript, if required.
-if env['BUILD_TESTS'] and os.path.exists(os.path.join(Dir('.').srcnode().abspath, 'tests')):
-    env.SConscript('tests/SConscript', duplicate=0, exports=['obj_map'])
+if env['BUILD_TESTS'] and os.path.exists(os.path.join(Dir('.').srcnode().abspath, env['TESTS_DIR'])):
+    env.SConscript(env['TESTS_DIR'] + '/SConscript', duplicate=0, exports=['obj_map'])
 
 # Build any applications.
 if env['BUILD_APPS'] and os.path.exists(os.path.join(Dir('.').srcnode().abspath, 'apps')):
