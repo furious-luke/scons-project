@@ -4,6 +4,7 @@ Export('env', 'obj_map')
 for suite in suites:
     if isinstance(suite, str):
         objs = []
+        ranks = []
     else:
         if len(suite) and isinstance(suite[-1], (list, tuple)):
             ranks = suite[-1]
