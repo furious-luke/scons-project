@@ -18,6 +18,15 @@ for srcs in sources:
         app_srcs = srcs[1:]
     else:
         app_srcs = []
-    app = env.Program(dst_dir + app_name, app_srcs, LIBS=libs)
+    if isinstance(app_srcs[-1], dict):
+        opts = app_srcs[-1]
+        app_srcs = app_srcs[:-1]
+    else:
+        opts = {}
+    if 'LIBS' in opts:
+        opts['LIBS'].extend(libs)
+    else:
+        opts['LIBS'] = libs
+    app = env.Program(dst_dir + app_name, app_srcs, **opts)
     if env['PREFIX']:
         env.Install(env['PREFIX'] + '/bin', app)
