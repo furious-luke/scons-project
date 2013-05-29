@@ -104,9 +104,9 @@ def configure_environment(env, vars=None):
     if env['WITH_OPENMP']:
         env.MergeFlags('-fopenmp')
 
-    # # Configure logging.
-    # if not env['LOG']:
-    #     env.MergeFlags('-DNLOG')
+    # Configure logging.
+    if not env['LOG']:
+        env.MergeFlags('-DNLOG')
     # if not env['LOG_TRIVIAL']:
     #     env.MergeFlags('-DNLOGTRIVIAL')
     # if not env['LOG_DEBUG']:
